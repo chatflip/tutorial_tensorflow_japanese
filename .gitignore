@@ -129,7 +129,7 @@ dmypy.json
 .idea
 
 # Tensorflow weight
-
+1_animeface_classification/weight
 
 
 # Specific folder

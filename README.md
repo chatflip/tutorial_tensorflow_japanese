@@ -14,5 +14,5 @@ tensorflow(2.x) tutorial for japanese
 ``` 
 conda create -n tf24 python=3.7 -y  
 source activate tf24  
-pip install tensorflow-gpu==2.4.0 pillow
+pip install tensorflow-gpu==2.4.0 scipy pillow opencv-python albumentations
 ```
