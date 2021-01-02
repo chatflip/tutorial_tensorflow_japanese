@@ -125,5 +125,14 @@ venv.bak/
 .dmypy.json
 dmypy.json
 
-# Pyre type checker
-.pyre/
+# PyCharm
+.idea
+
+# Tensorflow weight
+
+
+
+# Specific folder
+log
+/datasets/*
+/backup
