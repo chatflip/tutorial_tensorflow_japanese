@@ -3,7 +3,7 @@ import time
 import os
 
 from tensorflow.keras.optimizers import SGD
-from tensorflow.keras.callbacks import TensorBoard
+from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint
 
 from args import opt
 from model import mobilenet_v2
@@ -54,23 +54,46 @@ def main(args):
         histogram_freq=1,
         write_graph=True)
 
+    save_weight_callback = ModelCheckpoint(
+        '{}/{}_mobilenetv2_best.ckpt'.format(args.path2weight, args.exp_name),
+        save_best_only=True,
+        save_weights_only=True,
+        verbose=1)
+    callbacks = [tensorboard_callback, save_weight_callback]
     train_generator, validation_generator = load_data(args)
 
     model = load_model(args)
+
     optimizer = SGD(lr=args.lr, momentum=args.momentum)  # weight decayなし
 
     model.compile(optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
+
+    if args.evaluate:
+        weight_name = '{}/{}_mobilenetv2_best.ckpt'.format(args.path2weight, args.exp_name)
+        print("use pretrained model : {}".format(weight_name))
+        model.load_weights(weight_name)
+        model.evaluate(
+            validation_generator,
+            verbose=2,
+            callbacks=[],
+            max_queue_size=args.workers,
+            workers=args.workers,
+            use_multiprocessing=True,
+        )
+        return
+
     starttime = time.time()  # 実行時間計測(実時間)
     model.fit(
         train_generator,
         epochs=args.epochs,
         verbose=2,
-        callbacks=[tensorboard_callback],
+        callbacks=callbacks,
         validation_data=validation_generator,
+        max_queue_size=args.workers,
         workers=args.workers,
         use_multiprocessing=True,
     )
-    model.save_weights(os.path.join(args.path2weight, 'model'))
+    model.save(os.path.join(args.path2weight, 'checkpoint.h5'))
 
     endtime = time.time()
     interval = endtime - starttime
