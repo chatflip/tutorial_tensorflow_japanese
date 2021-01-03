@@ -18,8 +18,7 @@
 # ダウンロード，フォルダ構成
 python py/setup.py
 # 学習，識別
-bash start.sh
-python py/main.py --apex
+bash train.sh
 # ログ確認
 tensorboard --logdir=log/animeface
 ```
@@ -31,5 +30,6 @@ OS: Ubuntu 18.04
 cuda 11.0  
 cudnn 8.0.2  
 
-Top1 Accuracy 91.92%  
-elapsed time = 0h 2m 12s
+Top1 Accuracy 91.98%  
+elapsed time = 0h 7m 50s
+

@@ -1,14 +1,15 @@
 import datetime
+import time
 import os
 
 from tensorflow.keras.optimizers import SGD
 from tensorflow.keras.callbacks import TensorBoard
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 from args import opt
 from model import mobilenet_v2
 from utils import seed_everything
 from transforms import get_preprocess_input
+from generator import AnimeFaceGenerator
 
 
 def load_model(args):
@@ -29,26 +30,19 @@ def load_model(args):
 
 def load_data(args):
     preprocess_input = get_preprocess_input(args)
-    train_data_gen = ImageDataGenerator(
-        preprocessing_function=preprocess_input['train'])
-    val_data_gen = ImageDataGenerator(
-        preprocessing_function=preprocess_input['val']
+    train_generator = AnimeFaceGenerator(
+        os.path.join(args.path2db, 'train'),
+        image_size=(args.crop_size, args.crop_size),
+        transforms=preprocess_input['train'],
+        shuffle=True,
     )
-
-    train_dir = os.path.join(args.path2db, 'train')
-    val_dir = os.path.join(args.path2db, 'val')
-
-    train_data = train_data_gen.flow_from_directory(
-        train_dir, target_size=(args.crop_size, args.crop_size), ## crop_sizeにresizeしてからやってる
-        color_mode='rgb', batch_size=args.batch_size,
-        class_mode='categorical', shuffle=True,
+    validation_generator = AnimeFaceGenerator(
+        os.path.join(args.path2db, 'val'),
+        image_size=(args.crop_size, args.crop_size),
+        transforms=preprocess_input['val'],
+        shuffle=False,
     )
-
-    validation_data = val_data_gen.flow_from_directory(
-        val_dir, target_size=(args.crop_size, args.crop_size), ## crop_sizeにresizeしてからやってる
-        color_mode='rgb', batch_size=args.batch_size,
-        class_mode='categorical', shuffle=False)
-    return train_data, validation_data
+    return train_generator, validation_generator
 
 
 def main(args):
@@ -58,27 +52,32 @@ def main(args):
         log_dir='log/{}/{}'.format(
             args.exp_name, datetime.datetime.now().strftime("%Y%m%d-%H%M%S")),
         histogram_freq=1,
-        write_graph=True,
-        )
+        write_graph=True)
 
-    train_data, validation_data = load_data(args)
+    train_generator, validation_generator = load_data(args)
 
     model = load_model(args)
     optimizer = SGD(lr=args.lr, momentum=args.momentum)  # weight decayなし
 
     model.compile(optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
-
+    starttime = time.time()  # 実行時間計測(実時間)
     model.fit(
-        train_data,
+        train_generator,
         epochs=args.epochs,
         verbose=2,
         callbacks=[tensorboard_callback],
-        validation_data=validation_data,
+        validation_data=validation_generator,
         workers=args.workers,
         use_multiprocessing=True,
     )
-
     model.save_weights(os.path.join(args.path2weight, 'model'))
+
+    endtime = time.time()
+    interval = endtime - starttime
+    print('elapsed time = {0:d}h {1:d}m {2:d}s'.format(
+        int(interval / 3600),
+        int((interval % 3600) / 60),
+        int((interval % 3600) % 60)))
 
 
 if __name__ == '__main__':

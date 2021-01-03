@@ -1,5 +1,6 @@
+import numpy as np
 from albumentations import (
-    Compose, RandomCrop, HorizontalFlip,  CenterCrop, ImageOnlyTransform
+    Compose, RandomCrop, HorizontalFlip, Resize, CenterCrop, ImageOnlyTransform
 )
 
 
@@ -10,15 +11,23 @@ class Normalize(ImageOnlyTransform):
 
     def apply(self, image, **params):
         if self.mode == 'tf':
+            image = image.astype(np.float32)
             image /= 127.5
             image -= 1.
         return image
+
+    def get_params_dependent_on_targets(self, params):
+        return params
+
+    def get_transform_init_args_names(self):
+        return "mode"
 
 
 def get_preprocess_input(args):
 
     def train_transform(x):
         augmentation = Compose([
+            Resize(args.image_size, args.image_size, p=1.0),
             RandomCrop(args.crop_size, args.crop_size, p=1.0),
             HorizontalFlip(p=0.5),
             Normalize(),
@@ -27,6 +36,7 @@ def get_preprocess_input(args):
 
     def val_transform(x):
         augmentation = Compose([
+            Resize(args.image_size, args.image_size, p=1.0),
             CenterCrop(args.crop_size, args.crop_size, p=1.0),
             Normalize(),
         ], p=1.0)
