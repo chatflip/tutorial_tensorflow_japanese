@@ -20,7 +20,10 @@ def load_model(args):
         'num_classes': args.num_classes,
         'activation': 'softmax',
     }
-    model = mobilenet_v2(model_input, model_output)
+    model_param = {
+        'weight_decay': args.weight_decay,
+    }
+    model = mobilenet_v2(model_input, model_output, model_param)
     return model
 
 
