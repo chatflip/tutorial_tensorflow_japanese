@@ -2,13 +2,13 @@ import datetime
 import time
 import os
 
+import albumentations as A
 from tensorflow.keras.optimizers import SGD
 from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint
 
 from args import opt
 from model import mobilenet_v2
 from utils import seed_everything
-from transforms import get_preprocess_input
 from generator import AnimeFaceGenerator
 
 
@@ -29,17 +29,34 @@ def load_model(args):
 
 
 def load_data(args):
-    preprocess_input = get_preprocess_input(args)
+    normalize = A.Normalize(
+        mean=[0.5, 0.5, 0.5],
+        std=[0.5, 0.5, 0.5],
+        max_pixel_value=255.0)
+
+    train_transforms = A.Compose([
+        A.Resize(args.image_size, args.image_size, p=1.0),
+        A.RandomCrop(args.crop_size, args.crop_size, p=1.0),
+        A.HorizontalFlip(p=0.5),
+        normalize,
+    ], p=1.0)
+
+    val_transforms = A.Compose([
+        A.Resize(args.image_size, args.image_size, p=1.0),
+        A.CenterCrop(args.crop_size, args.crop_size, p=1.0),
+        normalize,
+    ], p=1.0)
+
     train_generator = AnimeFaceGenerator(
         os.path.join(args.path2db, 'train'),
         image_size=(args.crop_size, args.crop_size),
-        transforms=preprocess_input['train'],
+        transforms=train_transforms,
         shuffle=True,
     )
     validation_generator = AnimeFaceGenerator(
         os.path.join(args.path2db, 'val'),
         image_size=(args.crop_size, args.crop_size),
-        transforms=preprocess_input['val'],
+        transforms=val_transforms,
         shuffle=False,
     )
     return train_generator, validation_generator

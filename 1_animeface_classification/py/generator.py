@@ -61,7 +61,7 @@ class AnimeFaceGenerator(Sequence):
         for i in range(len(image_list)):
             image = cv2.imread(image_list[i])
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            transformed_image = self.transforms(image)
+            transformed = self.transforms(image=image)
             label_temp = to_categorical(labels_list[i], self.num_classes)
-            x[i], y[i] = transformed_image, label_temp
+            x[i], y[i] = transformed["image"], label_temp
         return x, y
