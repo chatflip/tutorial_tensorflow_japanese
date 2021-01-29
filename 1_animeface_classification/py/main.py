@@ -3,6 +3,7 @@ import time
 import os
 
 import albumentations as A
+import tensorflow as tf
 from tensorflow.keras.optimizers import SGD
 from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint
 
@@ -72,7 +73,8 @@ def main(args):
         write_graph=True)
 
     save_weight_callback = ModelCheckpoint(
-        '{}/{}_mobilenetv2_best.ckpt'.format(args.path2weight, args.exp_name),
+        '{}/{}_mobilenetv2_best.h5'.format(
+            args.path2weight, args.exp_name),
         save_best_only=True,
         save_weights_only=True,
         verbose=1)
@@ -86,12 +88,12 @@ def main(args):
     model.compile(optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
 
     if args.evaluate:
-        weight_name = '{}/{}_mobilenetv2_best.ckpt'.format(args.path2weight, args.exp_name)
+        weight_name = '{}/{}_mobilenetv2_best.h5'.format(args.path2weight, args.exp_name)
         print("use pretrained model : {}".format(weight_name))
         model.load_weights(weight_name)
         model.evaluate(
             validation_generator,
-            verbose=2,
+            verbose=1,
             callbacks=[],
             max_queue_size=args.workers,
             workers=args.workers,
@@ -103,7 +105,7 @@ def main(args):
     model.fit(
         train_generator,
         epochs=args.epochs,
-        verbose=2,
+        verbose=1,
         callbacks=callbacks,
         validation_data=validation_generator,
         max_queue_size=args.workers,
@@ -111,6 +113,7 @@ def main(args):
         use_multiprocessing=True,
     )
     model.save(os.path.join(args.path2weight, 'checkpoint.h5'))
+    tf.saved_model.save(model, args.path2weight)
 
     endtime = time.time()
     interval = endtime - starttime

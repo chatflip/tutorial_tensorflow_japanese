@@ -23,13 +23,6 @@ bash train.sh
 tensorboard --logdir=log/animeface
 ```
 
-## 動作環境(確認済み)
-OS: Ubuntu 18.04  
-プロセッサ Intel Core i9 3.6GHz  
-グラフィック GeForce RTX 2080 Ti x2  
-cuda 11.0  
-cudnn 8.0.2  
-
-Top1 Accuracy 91.98%  
-elapsed time = 0h 7m 50s
-
+## Result
+Top1 Accuracy 92.03%  
+elapsed time = 0h 8m 14s
